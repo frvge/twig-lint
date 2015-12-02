@@ -54,6 +54,11 @@ class LintCommand extends Command
                     'only-print-errors',
                     '',
                     InputOption::VALUE_NONE
+                ),
+                new InputOption(
+                    'summary',
+                    '',
+                    InputOption::VALUE_NONE
                 )
             ))
             ->addArgument('filename')
@@ -89,6 +94,7 @@ EOF
         $filename        = $input->getArgument('filename');
         $exclude         = $input->getOption('exclude');
         $onlyPrintErrors = $input->getOption('only-print-errors');
+        $summary         = $input->getOption('summary');
         $output          = $this->getOutput($output, $input->getOption('format'));
 
         if (!$filename) {
@@ -125,8 +131,20 @@ EOF
         }
 
         $errors = 0;
+        $linted = 0;
         foreach ($files as $file) {
+            $linted++;
             $errors += $this->validateTemplate($twig, $output, file_get_contents($file), $file, $onlyPrintErrors);
+        }
+
+        $stats = array(
+            'total' => count($files),
+            'linted' => $linted,
+            'errors' => $errors,
+        );
+
+        if ($summary) {
+            $output->summary($stats);
         }
 
         return $errors > 0 ? 1 : 0;
